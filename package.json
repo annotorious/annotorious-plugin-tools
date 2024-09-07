@@ -1,0 +1,48 @@
+{
+  "name": "@annotorious/plugin-tools",
+  "version": "1.0.0",
+  "description": "Additional drawing tools for Annotorious",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/annotorious-selector-pack.es.js",
+      "require": "./dist/annotorious-selector-pack.js"
+    },
+    "./annotorious-selector-pack.css": "./dist/annotorious-selector-pack.css"
+  },
+  "main": "./dist/annotorious-selector-pack.js",
+  "module": "./dist/annotorious-selector-pack.es.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/annotorious/annotorious-extensions.git"
+  },
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/annotorious/annotorious-extensions/issues"
+  },
+  "homepage": "https://annotorious.github.io",
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.1.2",
+    "@tsconfig/svelte": "^5.0.4",
+    "@types/node": "^22.5.4",
+    "openseadragon": "^5.0.0",
+    "svelte": "^4.2.19",
+    "svelte-preprocess": "^6.0.2",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.3",
+    "vite-plugin-dts": "^4.1.1"
+  },
+  "peerDependencies": {
+    "@annotorious/openseadragon": "^3.0.5"
+  }
+}
