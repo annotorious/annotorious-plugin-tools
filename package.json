@@ -2,6 +2,17 @@
   "name": "@annotorious/plugin-tools",
   "version": "1.0.0",
   "description": "Additional drawing tools for Annotorious",
+  "author": "Rainer Simon",
+  "license": "BSD-3-Clause",
+  "homepage": "https://annotorious.dev",
+  "funding": "https://steadyhq.com/rainer-simon",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/annotorious/annotorious-plugin-tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/annotorious/annotorious-plugin-tools/issues"
+  },
   "type": "module",
   "scripts": {
     "start": "vite",
@@ -22,15 +33,6 @@
   "files": [
     "dist"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/annotorious/annotorious-extensions.git"
-  },
-  "license": "BSD-3-Clause",
-  "bugs": {
-    "url": "https://github.com/annotorious/annotorious-extensions/issues"
-  },
-  "homepage": "https://annotorious.github.io",
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.1.2",
     "@tsconfig/svelte": "^5.0.4",
