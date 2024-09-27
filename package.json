@@ -22,10 +22,10 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/annotorious-selector-pack.es.js",
-      "require": "./dist/annotorious-selector-pack.js"
+      "import": "./dist/annotorious-plugin-tools.es.js",
+      "require": "./dist/annotorious-plugin-tools.js"
     },
-    "./annotorious-selector-pack.css": "./dist/annotorious-selector-pack.css"
+    "./annotorious-selector-pack.css": "./dist/annotorious-plugin-tools.css"
   },
   "main": "./dist/annotorious-selector-pack.js",
   "module": "./dist/annotorious-selector-pack.es.js",
