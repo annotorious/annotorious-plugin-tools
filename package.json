@@ -1,11 +1,12 @@
 {
   "name": "@annotorious/plugin-tools",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Additional drawing tools for Annotorious",
   "author": "Rainer Simon",
   "license": "BSD-3-Clause",
   "homepage": "https://annotorious.dev",
   "funding": "https://steadyhq.com/rainer-simon",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/annotorious/annotorious-plugin-tools.git"
@@ -13,26 +14,25 @@
   "bugs": {
     "url": "https://github.com/annotorious/annotorious-plugin-tools/issues"
   },
-  "type": "module",
   "scripts": {
     "start": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
+  "main": "./dist/annotorious-plugin-tools.js",
+  "module": "./dist/annotorious-plugin-tools.es.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/annotorious-plugin-tools.es.js",
       "require": "./dist/annotorious-plugin-tools.js"
     },
-    "./annotorious-selector-pack.css": "./dist/annotorious-plugin-tools.css"
+    "./annotorious-plugin-tools.css": "./dist/annotorious-plugin-tools.css"
   },
-  "main": "./dist/annotorious-selector-pack.js",
-  "module": "./dist/annotorious-selector-pack.es.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.1.2",
     "@tsconfig/svelte": "^5.0.4",
