@@ -1,16 +1,14 @@
 <script lang="ts">
   import { Editor, Handle } from '@annotorious/annotorious/src';
+  import { getMaskDimensions } from '@annotorious/annotorious';
   import type { Ellipse, Shape, Transform } from '@annotorious/annotorious';
   
   export let shape: Ellipse;
-
   export let transform: Transform;
-
   export let viewportScale: number = 1;
+  export let svgEl: SVGSVGElement;
 
   $: geom = shape.geometry;
-
-  $: handleSize = 10 / viewportScale;
 
   const editor = (ellipse: Shape, handle: string, delta: [number, number]) => {
     const initialBounds = ellipse.geometry.bounds;
@@ -74,19 +72,30 @@
       }
     };
   }
+
+  $: mask = getMaskDimensions(geom.bounds, 2 / viewportScale);
+  const maskId = `ellipse-mask-${Math.random().toString(36).substring(2, 12)}`;
 </script>
 
 <Editor
   shape={shape}
   transform={transform}
   editor={editor}
+  svgEl={svgEl}
   on:grab
   on:change 
   on:release
   let:grab={grab}>
+  <defs>
+    <mask id={maskId} class="a9s-ellipse-editor-mask">
+      <rect x={mask.x} y={mask.y} width={mask.w} height={mask.h} />
+      <ellipse cx={geom.cx} cy={geom.cy} rx={geom.rx} ry={geom.ry} />
+    </mask>
+  </defs>
 
   <ellipse 
     class="a9s-outer"
+    mask={`url(#${maskId})`}
     on:pointerdown={grab('SHAPE')}
     cx={geom.cx} cy={geom.cy} rx={geom.rx} ry={geom.ry} />
 
@@ -119,3 +128,13 @@
     x={geom.cx - geom.rx} y={geom.cy} 
     scale={viewportScale} />
 </Editor>
+
+<style>
+  mask.a9s-ellipse-editor-mask > rect {
+    fill: #fff;
+  }
+
+  mask.a9s-ellipse-editor-mask > ellipse {
+    fill: #000;
+  }
+</style>

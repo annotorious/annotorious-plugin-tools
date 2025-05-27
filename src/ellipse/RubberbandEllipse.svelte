@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
   import { ShapeType } from '@annotorious/annotorious';
+  import { getMaskDimensions } from '@annotorious/annotorious';
   import type { Ellipse, DrawingMode, Transform } from '@annotorious/annotorious';
 
   const dispatch = createEventDispatcher<{ create: Ellipse }>();
@@ -9,6 +10,7 @@
   export let addEventListener: (type: string, fn: EventListener, capture?: boolean) => void;
   export let drawingMode: DrawingMode
   export let transform: Transform;
+  export let viewportScale: number;
   
   let container: SVGGElement;
 
@@ -178,6 +180,9 @@
       document.removeEventListener('keydown', onKeyDown);
     }
   });
+
+  const maskId = `ellipse-mask-${Math.random().toString(36).substring(2, 12)}`;
+  $: buffer = 2 / viewportScale;
 </script>
 
 <g 
@@ -185,8 +190,25 @@
   class="a9s-annotation a9s-rubberband">
   
   {#if origin}
+    <defs>
+      <mask id={maskId} class="a9s-rubberband-ellipse-mask">
+        <rect 
+          x={x - buffer} 
+          y={y - buffer} 
+          width={w + 2 * buffer}
+          height={h + 2 * buffer}/>
+
+        <ellipse
+          cx={x + w / 2} 
+          cy={y + h / 2} 
+          rx={w / 2} 
+          ry={h / 2} />
+      </mask>
+    </defs>
+
     <ellipse 
       class="a9s-outer"
+      mask={`url(#${maskId})`}
       cx={x + w / 2} 
       cy={y + h / 2} 
       rx={w / 2} 
@@ -200,3 +222,13 @@
       ry={h / 2} />
   {/if}
 </g>
+
+<style>
+  mask.a9s-rubberband-ellipse-mask > rect {
+    fill: #fff;
+  }
+
+  mask.a9s-rubberband-ellipse-mask > ellipse {
+    fill: #000;
+  }
+</style>
