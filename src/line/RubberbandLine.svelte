@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
   import { ShapeType } from '@annotorious/annotorious';
-  import { boundsFromPoints, distance, getMaskDimensions } from '@annotorious/annotorious';
+  import { boundsFromPoints, distance } from '@annotorious/annotorious';
   import type { Line, DrawingMode, Transform } from '@annotorious/annotorious';
 
   const dispatch = createEventDispatcher<{ create: Line }>();
@@ -95,7 +95,7 @@
 
   const stopDrawing = () => {
     // Require 4 pixels minimum
-    if (origin && cursor && distance(origin, cursor)> 4) {
+    if (origin && cursor && distance(origin, cursor) > 4) {
       const shape: Line = {
         type: ShapeType.LINE, 
         geometry: {
@@ -119,28 +119,15 @@
     addEventListener('pointerup', onPointerUp);
   });
 
-  $: coords = origin && cursor ? [origin, cursor] : [];
-  
-  $: mask = coords.length > 0 ? getMaskDimensions(boundsFromPoints(coords), 2 / viewportScale) : undefined;
-
-  const maskId = `line-mask-${Math.random().toString(36).substring(2, 12)}`;
 </script>
 
 <g 
   bind:this={container}
   class="a9s-annotation a9s-rubberband">
   
-  {#if mask}
-    <defs>
-      <mask id={maskId} class="a9s-rubberband-line-mask">
-        <rect x={mask.x} y={mask.y} width={mask.w} height={mask.h}/>
-        <line x1={x1} y1={y1} x2={x2} y2={y2} />
-      </mask>
-    </defs>
-
+  {#if origin && cursor}
     <line 
       class="a9s-outer"
-      mask={`url(#${maskId})`}
       x1={x1} y1={y1} x2={x2} y2={y2} />
 
     <line 
@@ -148,13 +135,3 @@
       x1={x1} y1={y1} x2={x2} y2={y2} />
   {/if}
 </g>
-
-<style>
-  mask.a9s-rubberband-line-mask > rect {
-    fill: #fff;
-  }
-
-  mask.a9s-rubberband-line-mask > line {
-    fill: #000;
-  }
-</style>
