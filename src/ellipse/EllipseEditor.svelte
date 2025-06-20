@@ -4,6 +4,7 @@
   import type { Ellipse, Shape, Transform } from '@annotorious/annotorious';
   
   export let shape: Ellipse;
+  export let computedStyle: string | undefined;
   export let transform: Transform;
   export let viewportScale: number = 1;
   export let svgEl: SVGSVGElement;
@@ -101,6 +102,7 @@
 
   <ellipse 
     class="a9s-inner a9s-shape-handle"
+    style={computedStyle}
     on:pointerdown={grab('SHAPE')}
     cx={geom.cx} cy={geom.cy} rx={geom.rx} ry={geom.ry} />
 

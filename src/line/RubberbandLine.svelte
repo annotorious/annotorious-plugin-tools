@@ -61,10 +61,6 @@
   const onPointerUp = (event: Event) => {
     const evt = event as PointerEvent;
     
-    if (drawingMode === 'click')
-      evt.stopImmediatePropagation();
-
-    
     if (drawingMode === 'click') {
       const timeDifference = performance.now() - lastPointerDown.timeStamp;
 
@@ -114,9 +110,9 @@
   }
 
   onMount(() => {
-    addEventListener('pointerdown', onPointerDown);
+    addEventListener('pointerdown', onPointerDown, true);
     addEventListener('pointermove', updateShape);
-    addEventListener('pointerup', onPointerUp);
+    addEventListener('pointerup', onPointerUp, true);
   });
 
 </script>
