@@ -10,6 +10,8 @@
   export let addEventListener: (type: string, fn: EventListener, capture?: boolean) => void;
   export let drawingMode: DrawingMode
   export let transform: Transform;
+  
+  // svelte-ignore unused-export-let
   export let viewportScale: number;
   
   let container: SVGGElement;
