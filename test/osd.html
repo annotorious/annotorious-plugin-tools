@@ -10,8 +10,11 @@
       }
 
       #openseadragon {
-        width: 320px;
-        height: 240px;
+        margin: 0 auto;
+        width: 800px;
+        height: 600px;
+        max-width: 100%;
+        max-height: 100%;
       }
 
       .buttons {
@@ -37,6 +40,9 @@
 
       import '@annotorious/openseadragon/annotorious-openseadragon.css';
 
+      // Balliol College MS 238A
+      var IMAGE = 'https://iiif.bodleian.ox.ac.uk/iiif/image/79bf8325-22fa-4696-afe5-7d827d84f393/info.json';
+
       window.onload = function() {
         var viewer = OpenSeadragon({
           id: 'openseadragon',
@@ -49,15 +55,12 @@
           gestureSettingsTouch: {
             pinchRotate: true
           },
-          tileSources: [{
-            type: 'image',
-            url: '640px-Hallstatt.jpg'
-          }]        
+          tileSources: IMAGE
         });
 
         var anno = createOSDAnnotator(viewer, {
           drawingEnabled: false,
-          drawingMode: 'click'
+          drawingMode: 'drag'
         });
 
         // Mount selector pack extension

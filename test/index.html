@@ -40,7 +40,7 @@
       import '@annotorious/annotorious/annotorious.css';
 
       window.onload = function() {
-        var anno = createImageAnnotator('sample-image', { drawingMode: 'click' });
+        var anno = createImageAnnotator('sample-image');
 
         anno.on('createAnnotation', function (annotation) {
           console.log('created', annotation);

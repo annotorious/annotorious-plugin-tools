@@ -82,5 +82,4 @@
     on:pointerdown={grab('POINT2')}
     x={geom.points[1][0]} y={geom.points[1][1]}
     scale={viewportScale} />
-
 </Editor>
