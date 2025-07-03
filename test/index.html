@@ -26,7 +26,10 @@
     </style>
   </head>
   <body>
-    <div id="content">    
+    <div id="content">
+      <p>
+        <button id="current-tool">RECTANGLE</button>
+      </p>
       <img id="sample-image" src="640px-Hallstatt.jpg" />
     </div>
 
@@ -37,7 +40,7 @@
       import '@annotorious/annotorious/annotorious.css';
 
       window.onload = function() {
-        var anno = createImageAnnotator('sample-image');
+        var anno = createImageAnnotator('sample-image', { drawingMode: 'click' });
 
         anno.on('createAnnotation', function (annotation) {
           console.log('created', annotation);
@@ -53,8 +56,21 @@
 
         // Mount selector pack extension
         mountToolsPlugin(anno);
-        
-        anno.setDrawingTool('ellipse');
+
+        var tools = anno.listDrawingTools();
+        console.log(tools);
+
+        var selected = 0;
+
+        var toolToggle = document.getElementById('current-tool');
+        toolToggle.addEventListener('click', function() {
+          selected += 1;
+          selected = selected % tools.length;
+
+          var tool = tools[selected];
+          toolToggle.innerHTML = tool.toUpperCase();
+          anno.setDrawingTool(tool);
+        });
       }
     </script>
   </body>

@@ -1,10 +1,14 @@
 import { ShapeType, type ImageAnnotator } from '@annotorious/annotorious';
+import type { OpenSeadragonAnnotator } from '@annotorious/openseadragon';
 import { EllipseEditor, RubberbandEllipse } from './ellipse';
-import type { SvelteComponent } from 'svelte';
+import { LineEditor, RubberbandLine } from './line';
 
 export const mountPlugin = (
-  anno: ImageAnnotator
+  anno: ImageAnnotator | OpenSeadragonAnnotator
 ) => {
-  anno.registerDrawingTool('ellipse', RubberbandEllipse as typeof SvelteComponent);
-  anno.registerShapeEditor(ShapeType.ELLIPSE, EllipseEditor as typeof SvelteComponent);
+  anno.registerDrawingTool('ellipse', RubberbandEllipse);
+  anno.registerShapeEditor(ShapeType.ELLIPSE, EllipseEditor);
+
+  anno.registerDrawingTool('line', RubberbandLine);
+  anno.registerShapeEditor(ShapeType.LINE, LineEditor);
 }

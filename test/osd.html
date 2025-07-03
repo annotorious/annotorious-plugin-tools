@@ -26,7 +26,8 @@
     <div id="openseadragon"></div>
 
     <div class="buttons">
-      <button id="toggle">SELECT</button>
+      <button id="current-mode">SELECT</button>
+      <button id="current-tool">RECTANGLE</button>
     </div>
 
     <script type="module">
@@ -62,15 +63,28 @@
         // Mount selector pack extension
         mountToolsPlugin(anno);
         
-        anno.setDrawingTool('ellipse');
+        var tools = anno.listDrawingTools();
+        console.log(tools);
 
-        const toggle = document.getElementById('toggle');
-        toggle.addEventListener('click', () => {
-          if (toggle.innerHTML === 'SELECT') {
-            toggle.innerHTML = 'DRAW';
+        var selectedTool = 0;
+
+        var toolToggle = document.getElementById('current-tool');
+        toolToggle.addEventListener('click', function() {
+          selectedTool += 1;
+          selectedTool = selectedTool % tools.length;
+
+          var tool = tools[selectedTool];
+          toolToggle.innerHTML = tool.toUpperCase();
+          anno.setDrawingTool(tool);
+        });
+
+        const modeToggle = document.getElementById('current-mode');
+        modeToggle.addEventListener('click', () => {
+          if (modeToggle.innerHTML === 'SELECT') {
+            modeToggle.innerHTML = 'DRAW';
             anno.setDrawingEnabled(true);
           } else {
-            toggle.innerHTML = 'SELECT';
+            modeToggle.innerHTML = 'SELECT';
             anno.setDrawingEnabled(false);
           }
         });
