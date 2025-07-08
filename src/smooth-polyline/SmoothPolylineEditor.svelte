@@ -1,10 +1,7 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount, tick } from 'svelte';
   import { Editor, Handle } from '@annotorious/annotorious/src';
-  import { boundsFromPoints, getMaskDimensions, getPolylinePoints, isTouch } from '@annotorious/annotorious';
-  import type { Polyline, PolylineGeometry, PolylineSegment, Shape, Transform } from '@annotorious/annotorious';
-
-  const dispatch = createEventDispatcher<{ change: Polyline }>();
+  import { boundsFromPoints, isTouch } from '@annotorious/annotorious';
+  import type { Polyline, PolylineGeometry, Shape, Transform } from '@annotorious/annotorious';
 
   /** Time difference (milliseconds) required for registering a click/tap **/
   const CLICK_THRESHOLD = 250;
@@ -178,6 +175,7 @@
     on:pointerdown={grab('START')}
     on:pointerup={onHandlePointerUp(0)} />
 
+  <!-- segment end handles -->
   {#each geom.segments as segment, idx}
     <Handle 
       class="a9s-corner-handle"
