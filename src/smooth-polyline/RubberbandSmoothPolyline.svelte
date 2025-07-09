@@ -12,13 +12,14 @@
   export let viewportScale = 1;
 
   let lastPointerDown: { timeStamp: number, offsetX: number, offsetY: number };
-
   let points: [number, number][] = [];
-  
   let cursor: [number, number] | undefined;
+  let isClosable: boolean = false;
 
   // Keep track of the user keeping the finger in place
   let touchPauseTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const CLOSE_DISTANCE = 20;
 
   const TOUCH_PAUSE_LIMIT = 1500;
 
@@ -48,6 +49,11 @@
 
     if (points.length > 0) {
       cursor = transform.elementToImage(evt.offsetX, evt.offsetY);
+
+      if (points.length >  2) {
+        const d = distance(cursor, points[0]) * viewportScale;
+        isClosable = d < CLOSE_DISTANCE;
+      }
 
       if (evt.pointerType === 'touch') {
         touchPauseTimer = setTimeout(() => {
@@ -152,14 +158,13 @@
       class="a9s-inner"
       d={pathString} />
         
-    <!-- Point handles -->
-    {#each points as point}
+    {#if isClosable}
       <circle 
         class="a9s-handle"
-        cx={point[0]} 
-        cy={point[1]} 
+        cx={points[0][0]} 
+        cy={points[0][1]} 
         r={handleRadius} />
-    {/each}
+    {/if}
   {/if}
 </g>
 

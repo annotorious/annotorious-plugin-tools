@@ -1,8 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { Editor, Handle } from '@annotorious/annotorious/src';
-  import { boundsFromPoints, computeSVGPath, isTouch } from '@annotorious/annotorious';
-  import type { Polyline, PolylineGeometry, Shape, Transform } from '@annotorious/annotorious';
+  import { approximateAsPolygon, boundsFromPoints, computeSVGPath, isTouch } from '@annotorious/annotorious';
+  import type { Polyline, PolylineGeometry, PolylinePoint, Shape, Transform } from '@annotorious/annotorious';
 
   const dispatch = createEventDispatcher<{ change: Polyline }>();
   
@@ -63,23 +63,19 @@
     // Drag, not click
     if (performance.now() - lastHandleClick > CLICK_THRESHOLD) return;
 
-    if (idx === 0) {
-      // Start handle cannot be selected
-      selectedEnd = null;
+    const isSelected = selectedEnd === idx;
+    if (isSelected) {
+      toggleSegment(idx);
     } else {
-      const isSelected = selectedEnd === idx;
-      if (isSelected) {
-        // toggleSegment(idx - 1);
-      } else {
-        selectedEnd = idx;
-      }
+      selectedEnd = idx;
     }
+
 
     reclaimFocus();
   }
 
-  /*
   const toggleSegment = (segmentIdx: number) => {
+    /*
     const segment = geom.segments[segmentIdx];
     
     if (segment.type === 'LINE') {
@@ -119,63 +115,52 @@
 
       dispatch('change', polyline);
     }
+    */
   };
-  */
 
   const editor = (polyline: Shape, handle: string, delta: [number, number]) => {
     reclaimFocus();
 
-    /*
     const geom = (polyline.geometry) as PolylineGeometry;
 
     const [dx, dy] = delta;
 
-    let start: [number, number] = [...geom.start];
-    let segments = [...geom.segments];
+    let points: PolylinePoint[];
 
     if (handle === 'SHAPE') {
-      start = [start[0] + dx, start[1] + dy];
-      segments = segments.map(s => ({
-        ...s,
-        end: [s.end[0] + dx, s.end[1] + dy],
-        cp1: s.cp1 ? [s.cp1[0] + dx, s.cp1[1] + dy] : undefined,
-        cp2: s.cp2 ? [s.cp2[0] + dx, s.cp2[1] + dy] : undefined
+      points = geom.points.map(pt => ({
+        ...pt,
+        point: [pt.point[0] + dx, pt.point[1] + dy],
+        inHandle: pt.inHandle ? [pt.inHandle[0] + dx, pt.inHandle[1] + dy] : undefined,
+        outHandle: pt.outHandle ? [pt.outHandle[0] + dx, pt.outHandle[1] + dy] : undefined
       }));
-    } else if (handle === 'START') {
-      start = [start[0] + dx, start[1] + dy];
-    } else if (handle.startsWith('END')) {
+    } else {
       try {
         const idx = parseInt(handle.split('-')[1]);
         
-        segments = segments.map((s, i) => i === idx ? {
-          ...s,
-          end: [s.end[0] + dx, s.end[1] + dy],
-          cp1: s.cp1 ? [s.cp1[0] + dx, s.cp1[1] + dy] : undefined,
-          cp2: s.cp2 ? [s.cp2[0] + dx, s.cp2[1] + dy] : undefined
-        } : s);
+        points = geom.points.map((pt, i) => i === idx ? {
+          ...pt,
+          point: [pt.point[0] + dx, pt.point[1] + dy],
+          inHandle: pt.inHandle ? [pt.inHandle[0] + dx, pt.inHandle[1] + dy] : undefined,
+          outHandle: pt.outHandle ? [pt.outHandle[0] + dx, pt.outHandle[1] + dy] : undefined
+        } : pt);
       } catch (error) {
         // Should never happen
         console.error(error);
+        points = geom.points;
       }
     }
 
-    const points = [
-      start,
-      ...segments.reduce<[number, number][]>((all, s) => {
-        const points = [s.cp1!, s.cp2!, s.end].filter(Boolean);
-        return [...all, ...points];
-      }, [])
-    ];
-
-    const bounds = boundsFromPoints(points);
+    const bounds = boundsFromPoints(approximateAsPolygon(geom));
 
     return {
       ...polyline,
-      geometry: { bounds, start, segments, closed: geom.closed }
+      geometry: {
+        bounds,
+        points,
+        closed: geom.closed
+      }
     } as Polyline;
-    */
-
-    return polyline;
   }
 
   $: d = computeSVGPath(geom);
@@ -214,8 +199,8 @@
       on:pointerenter={onEnterHandle}
       on:pointerleave={onLeaveHandle}
       on:pointerdown={onHandlePointerDown}
-      on:pointerdown={grab(`END-${idx}`)}
-      on:pointerup={onHandlePointerUp(idx + 1)} />
+      on:pointerdown={grab(`CORNER-${idx}`)}
+      on:pointerup={onHandlePointerUp(idx)} />
   {/each}
 </Editor>
 
