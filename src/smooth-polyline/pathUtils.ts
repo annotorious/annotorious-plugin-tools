@@ -1,61 +1,89 @@
-import type { PolylineGeometry, PolylinePoint } from '@annotorious/annotorious';
+import type { Polyline, PolylinePoint } from '@annotorious/annotorious';
 
-/*
-export const togglePointType = (
-  point: PolylinePoint, 
-  prevPoint?: PolylinePoint, 
-  nextPoint?: PolylinePoint,
-): PolylinePoint => {
-  const hasHandles = point.outgoingHandle || point.incomingHandle;
+export const calculateTangentDirection = (
+  shape: Polyline,
+  index: number, 
+  maxWidth: number = 60
+): [number, number] => {
+  const { points, closed } = shape.geometry;
+
+  const currentPoint = points[index];
+
+  const prevIdx = index === 0 ? (closed ? points.length - 1 : null) : index - 1;
+  const nextIdx = index === points.length - 1 ? (closed ? 0 : null) : index + 1;
+
+  let tangentX = 0;
+  let tangentY = 0;
+
+  if (prevIdx !== null && nextIdx !== null) {
+    // Middle point - use direction from previous to next point
+    const prevPoint = points[prevIdx].point;
+    const nextPoint = points[nextIdx].point;
+    tangentX = nextPoint[0] - prevPoint[0];
+    tangentY = nextPoint[1] - prevPoint[1];
+  } else if (prevIdx !== null) {
+    // End point - use direction from previous point
+    const prevPoint = points[prevIdx].point;
+    tangentX = currentPoint.point[0] - prevPoint[0];
+    tangentY = currentPoint.point[1] - prevPoint[1];
+  } else if (nextIdx !== null) {
+    // Start point - use direction to next point
+    const nextPoint = points[nextIdx].point;
+    tangentX = nextPoint[0] - currentPoint.point[0];
+    tangentY = nextPoint[1] - currentPoint.point[1];
+  }
+
+  const length = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
+  if (length > 0) {
+    const factor = Math.min(length * 0.3, maxWidth); // Control handle distance
+    tangentX = (tangentX / length) * factor;
+    tangentY = (tangentY / length) * factor;
+  }
+
+  return [tangentX, tangentY];
+}
+
+export const togglePolylineCorner = (shape: Polyline, cornerIdx: number): Polyline => {
+  const corner = shape.geometry.points[cornerIdx];
   
-  if (!hasHandles) {
-    // Convert to curve with sensible defaults
-    const handleDistance = 30; // Adjust as needed
+  if (corner.type === 'CORNER') {
+    // Convert to curve - create symmetric control points for smooth curve
+    const [tangentX, tangentY] = calculateTangentDirection(shape, cornerIdx);
     
-    let incomingHandle: [number, number] | undefined;
-    let outgoingHandle: [number, number] | undefined;
-    
-    if (prevPoint) {
-      // Calculate direction from previous point
-      const dx = point.point[0] - prevPoint.point[0];
-      const dy = point.point[1] - prevPoint.point[1];
-      const length = Math.sqrt(dx * dx + dy * dy);
-      const normalizedDx = dx / length;
-      const normalizedDy = dy / length;
-      
-      incomingHandle = [
-        point.point[0] - normalizedDx * handleDistance,
-        point.point[1] - normalizedDy * handleDistance
-      ];
-    }
-    
-    if (nextPoint) {
-      // Calculate direction to next point
-      const dx = nextPoint.point[0] - point.point[0];
-      const dy = nextPoint.point[1] - point.point[1];
-      const length = Math.sqrt(dx * dx + dy * dy);
-      const normalizedDx = dx / length;
-      const normalizedDy = dy / length;
-      
-      outgoingHandle = [
-        point.point[0] + normalizedDx * handleDistance,
-        point.point[1] + normalizedDy * handleDistance
-      ];
-    }
-    
+    const currPoint = corner.point;
+
+    const inHandle: [number, number] = [
+      currPoint[0] - tangentX,
+      currPoint[1] - tangentY
+    ];
+
+    const outHandle: [number, number] = [
+      currPoint[0] + tangentX,
+      currPoint[1] + tangentY
+    ];
+
     return {
-      ...point,
-      incomingHandle,
-      outgoingHandle,
-      handleLocked: true
+      ...shape,
+      geometry: {
+        ...shape.geometry,
+        points: shape.geometry.points.map((pt, i) => i === cornerIdx ? {
+          ...pt,
+          type: 'CURVE',
+          inHandle,
+          outHandle
+        } as PolylinePoint : pt)
+      }
     };
   } else {
     return {
-      ...point,
-      incomingHandle: undefined,
-      outgoingHandle: undefined,
-      handleLocked: undefined
-    };
+      ...shape,
+      geometry: {
+        ...shape.geometry,
+        points: shape.geometry.points.map((pt, i) => i === cornerIdx ? {
+          ...pt,
+          type: 'CORNER'
+        } as PolylinePoint : pt)
+      }
+    }
   }
-};
-*/
+}
