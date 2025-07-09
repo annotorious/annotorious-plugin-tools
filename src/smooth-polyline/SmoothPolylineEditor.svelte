@@ -65,7 +65,7 @@
 
     const isSelected = selectedEnd === idx;
     if (isSelected) {
-      toggleSegment(idx);
+      toggleCorner(idx);
     } else {
       selectedEnd = idx;
     }
@@ -74,31 +74,78 @@
     reclaimFocus();
   }
 
-  const toggleSegment = (segmentIdx: number) => {
-    /*
-    const segment = geom.segments[segmentIdx];
+  /**
+   * Calculate the tangent direction at a point for smooth curve creation
+   */
+  const calculateTangentDirection = (points: PolylinePoint[], index: number, closed: boolean): [number, number] => {
+    const currentPoint = points[index];
+    const prevIdx = index === 0 ? (closed ? points.length - 1 : null) : index - 1;
+    const nextIdx = index === points.length - 1 ? (closed ? 0 : null) : index + 1;
+
+    let tangentX = 0;
+    let tangentY = 0;
+
+    // Calculate tangent based on neighboring points
+    if (prevIdx !== null && nextIdx !== null) {
+      // Middle point - use direction from previous to next point
+      const prevPoint = points[prevIdx].point;
+      const nextPoint = points[nextIdx].point;
+      tangentX = nextPoint[0] - prevPoint[0];
+      tangentY = nextPoint[1] - prevPoint[1];
+    } else if (prevIdx !== null) {
+      // End point - use direction from previous point
+      const prevPoint = points[prevIdx].point;
+      tangentX = currentPoint.point[0] - prevPoint[0];
+      tangentY = currentPoint.point[1] - prevPoint[1];
+    } else if (nextIdx !== null) {
+      // Start point - use direction to next point
+      const nextPoint = points[nextIdx].point;
+      tangentX = nextPoint[0] - currentPoint.point[0];
+      tangentY = nextPoint[1] - currentPoint.point[1];
+    }
+
+    // Normalize and scale the tangent
+    const length = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
+    if (length > 0) {
+      const factor = Math.min(length * 0.3, 60); // Control handle distance
+      tangentX = (tangentX / length) * factor;
+      tangentY = (tangentY / length) * factor;
+    }
+
+    return [tangentX, tangentY];
+  }
+
+  const toggleCorner = (cornerIdx: number) => {
+    const corner = geom.points[cornerIdx];
     
-    if (segment.type === 'LINE') {
-      // Convert to curve with default control points
-      const prevCorner = segmentIdx === 0 ? geom.start : geom.segments[segmentIdx - 1].end;
+    if (corner.type === 'CORNER') {
+      // Convert to curve - create symmetric control points for smooth curve
+      const [tangentX, tangentY] = calculateTangentDirection(geom.points, cornerIdx, Boolean(geom.closed));
       
-      const dx = segment.end[0] - prevCorner[0];
-      const dy = segment.end[1] - prevCorner[1];
-      
-      const cp1: [number, number] = [prevCorner[0] + dx * 0.33, prevCorner[1] + dy * 0.33];
-      const cp2: [number, number] = [prevCorner[0] + dx * 0.67, prevCorner[1] + dy * 0.67];
+      const currPoint = corner.point;
+
+      const inHandle: [number, number] = [
+        currPoint[0] - tangentX,
+        currPoint[1] - tangentY
+      ];
+
+      const outHandle: [number, number] = [
+        currPoint[0] + tangentX,
+        currPoint[1] + tangentY
+      ];
 
       const polyline: Polyline = {
         ...shape,
         geometry: {
           ...geom,
-          segments: geom.segments.map((s, i) => i === segmentIdx ? {
+          points: geom.points.map((pt, i) => i === cornerIdx ? {
+            ...pt,
             type: 'CURVE',
-            end: s.end,
-            cp1, cp2
-          } as PolylineSegment : s)
+            inHandle,
+            outHandle
+          } as PolylinePoint : pt)
         }
-      }
+      };
       
       dispatch('change', polyline);
     } else {
@@ -106,16 +153,15 @@
         ...shape,
         geometry: {
           ...geom,
-          segments: geom.segments.map((s, i) => i === segmentIdx ? {
-            type: 'LINE',
-            end: s.end
-          } as PolylineSegment : s)
+          points: geom.points.map((pt, i) => i === cornerIdx ? {
+            ...pt,
+            type: 'CORNER'
+          } as PolylinePoint : pt)
         }
       }
 
       dispatch('change', polyline);
     }
-    */
   };
 
   const editor = (polyline: Shape, handle: string, delta: [number, number]) => {
@@ -134,7 +180,7 @@
         inHandle: pt.inHandle ? [pt.inHandle[0] + dx, pt.inHandle[1] + dy] : undefined,
         outHandle: pt.outHandle ? [pt.outHandle[0] + dx, pt.outHandle[1] + dy] : undefined
       }));
-    } else {
+    } else if (handle.startsWith('CORNER-')) {
       try {
         const idx = parseInt(handle.split('-')[1]);
         
@@ -149,6 +195,64 @@
         console.error(error);
         points = geom.points;
       }
+    } else if (handle.startsWith('IN-') || handle.startsWith('OUT-')) {
+      const [handleType, idxStr] = handle.split('-');
+      const idx = parseInt(idxStr);
+      
+      points = geom.points.map((pt, i) => {
+        if (i === idx && pt.type === 'CURVE') {
+          const newPt = { ...pt };
+          
+          if (handleType === 'IN' && pt.inHandle) {
+            newPt.inHandle = [pt.inHandle[0] + dx, pt.inHandle[1] + dy];
+            
+            // Optional: maintain symmetry for smooth curves
+            if (pt.outHandle) {
+              const inDx = newPt.inHandle[0] - pt.point[0];
+              const inDy = newPt.inHandle[1] - pt.point[1];
+              const inLength = Math.sqrt(inDx * inDx + inDy * inDy);
+              const outLength = Math.sqrt(
+                (pt.outHandle[0] - pt.point[0]) ** 2 + 
+                (pt.outHandle[1] - pt.point[1]) ** 2
+              );
+              
+              if (inLength > 0) {
+                newPt.outHandle = [
+                  pt.point[0] - (inDx / inLength) * outLength,
+                  pt.point[1] - (inDy / inLength) * outLength
+                ];
+              }
+            }
+          } else if (handleType === 'OUT' && pt.outHandle) {
+            newPt.outHandle = [pt.outHandle[0] + dx, pt.outHandle[1] + dy];
+            
+            // Optional: maintain symmetry for smooth curves
+            if (pt.inHandle) {
+              const outDx = newPt.outHandle[0] - pt.point[0];
+              const outDy = newPt.outHandle[1] - pt.point[1];
+              const outLength = Math.sqrt(outDx * outDx + outDy * outDy);
+              const inLength = Math.sqrt(
+                (pt.inHandle[0] - pt.point[0]) ** 2 + 
+                (pt.inHandle[1] - pt.point[1]) ** 2
+              );
+              
+              if (outLength > 0) {
+                newPt.inHandle = [
+                  pt.point[0] - (outDx / outLength) * inLength,
+                  pt.point[1] - (outDy / outLength) * inLength
+                ];
+              }
+            }
+          }
+          
+          return newPt;
+        }
+
+        return pt;
+      });
+    } else {   
+      // Should never happen
+      points = geom.points;
     }
 
     const bounds = boundsFromPoints(approximateAsPolygon(geom));
@@ -161,6 +265,7 @@
         closed: geom.closed
       }
     } as Polyline;
+
   }
 
   $: d = computeSVGPath(geom);
@@ -201,6 +306,51 @@
       on:pointerdown={onHandlePointerDown}
       on:pointerdown={grab(`CORNER-${idx}`)}
       on:pointerup={onHandlePointerUp(idx)} />
+  {/each}
+
+  <!-- Control handles for curve points -->
+  {#each geom.points as pt, idx}
+    {#if pt.type === 'CURVE'}
+      {#if pt.inHandle}
+        <Handle 
+          class="a9s-control-handle a9s-in-handle"
+          x={pt.inHandle[0]}
+          y={pt.inHandle[1]}
+          scale={viewportScale}
+          on:pointerdown={grab(`IN-${idx}`)} />
+        
+        <!-- Control line -->
+        <line
+          class="a9s-control-line"
+          x1={pt.point[0]}
+          y1={pt.point[1]}
+          x2={pt.inHandle[0]}
+          y2={pt.inHandle[1]}
+          stroke="#666"
+          stroke-width="1"
+          stroke-dasharray="2,2" />
+      {/if}
+      
+      {#if pt.outHandle}
+        <Handle 
+          class="a9s-control-handle a9s-out-handle"
+          x={pt.outHandle[0]}
+          y={pt.outHandle[1]}
+          scale={viewportScale}
+          on:pointerdown={grab(`OUT-${idx}`)} />
+        
+        <!-- Control line -->
+        <line
+          class="a9s-control-line"
+          x1={pt.point[0]}
+          y1={pt.point[1]}
+          x2={pt.outHandle[0]}
+          y2={pt.outHandle[1]}
+          stroke="#666"
+          stroke-width="1"
+          stroke-dasharray="2,2" />
+      {/if}
+    {/if}
   {/each}
 </Editor>
 
