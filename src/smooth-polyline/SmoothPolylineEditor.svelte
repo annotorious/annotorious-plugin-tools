@@ -1,8 +1,11 @@
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
   import { Editor, Handle } from '@annotorious/annotorious/src';
-  import { boundsFromPoints, isTouch } from '@annotorious/annotorious';
+  import { boundsFromPoints, computeSVGPath, isTouch } from '@annotorious/annotorious';
   import type { Polyline, PolylineGeometry, Shape, Transform } from '@annotorious/annotorious';
 
+  const dispatch = createEventDispatcher<{ change: Polyline }>();
+  
   /** Time difference (milliseconds) required for registering a click/tap **/
   const CLICK_THRESHOLD = 250;
 
@@ -16,7 +19,7 @@
   /** Drawing tool layer **/
   let isHandleHovered = false;
   let lastHandleClick: number | null = null;
-  let selectedCorner: number | null = null;
+  let selectedEnd: number | null = null;
 
   $: geom = shape.geometry;
 
@@ -37,7 +40,7 @@
    * De-selects all corners and reclaims focus.
    */
   const onShapePointerUp = () => {
-    selectedCorner = null;
+    selectedEnd = null;
     reclaimFocus();
   }
 
@@ -60,18 +63,69 @@
     // Drag, not click
     if (performance.now() - lastHandleClick > CLICK_THRESHOLD) return;
 
-    const isSelected = selectedCorner === idx;
-    if (isSelected)
-      selectedCorner = null;
-    else
-      selectedCorner = idx;
+    if (idx === 0) {
+      // Start handle cannot be selected
+      selectedEnd = null;
+    } else {
+      const isSelected = selectedEnd === idx;
+      if (isSelected) {
+        // toggleSegment(idx - 1);
+      } else {
+        selectedEnd = idx;
+      }
+    }
 
     reclaimFocus();
   }
 
+  /*
+  const toggleSegment = (segmentIdx: number) => {
+    const segment = geom.segments[segmentIdx];
+    
+    if (segment.type === 'LINE') {
+      // Convert to curve with default control points
+      const prevCorner = segmentIdx === 0 ? geom.start : geom.segments[segmentIdx - 1].end;
+      
+      const dx = segment.end[0] - prevCorner[0];
+      const dy = segment.end[1] - prevCorner[1];
+      
+      const cp1: [number, number] = [prevCorner[0] + dx * 0.33, prevCorner[1] + dy * 0.33];
+      const cp2: [number, number] = [prevCorner[0] + dx * 0.67, prevCorner[1] + dy * 0.67];
+
+      const polyline: Polyline = {
+        ...shape,
+        geometry: {
+          ...geom,
+          segments: geom.segments.map((s, i) => i === segmentIdx ? {
+            type: 'CURVE',
+            end: s.end,
+            cp1, cp2
+          } as PolylineSegment : s)
+        }
+      }
+      
+      dispatch('change', polyline);
+    } else {
+      const polyline: Polyline = {
+        ...shape,
+        geometry: {
+          ...geom,
+          segments: geom.segments.map((s, i) => i === segmentIdx ? {
+            type: 'LINE',
+            end: s.end
+          } as PolylineSegment : s)
+        }
+      }
+
+      dispatch('change', polyline);
+    }
+  };
+  */
+
   const editor = (polyline: Shape, handle: string, delta: [number, number]) => {
     reclaimFocus();
 
+    /*
     const geom = (polyline.geometry) as PolylineGeometry;
 
     const [dx, dy] = delta;
@@ -119,25 +173,12 @@
       ...polyline,
       geometry: { bounds, start, segments, closed: geom.closed }
     } as Polyline;
+    */
+
+    return polyline;
   }
 
-  const computePath = (geom: PolylineGeometry) => {
-    const { start, segments } = geom;
-    
-    let path = `M ${start[0]},${start[1]}`;
-    
-    segments.forEach(s => {
-      if (s.type === 'LINE') {
-        path += ` L ${s.end[0]},${s.end[1]}`;
-      } else if (s.type === 'CURVE' && s.cp1 && s.cp2) {
-        path += ` C ${s.cp1[0]},${s.cp1[1]} ${s.cp2[0]},${s.cp2[1]} ${s.end[0]},${s.end[1]}`;
-      }
-    });
-    
-    return path;
-  }
-
-  $: d = computePath(geom);
+  $: d = computeSVGPath(geom);
 </script>
 
 <Editor
@@ -163,24 +204,12 @@
     on:pointerdown={grab('SHAPE')}
     d={d} />
 
-  <!-- Start handle -->
-  <Handle 
-    class="a9s-corner-handle"
-    x={geom.start[0]}
-    y={geom.start[1]}
-    scale={viewportScale}
-    on:pointerenter={onEnterHandle}
-    on:pointerleave={onLeaveHandle}
-    on:pointerdown={onHandlePointerDown}
-    on:pointerdown={grab('START')}
-    on:pointerup={onHandlePointerUp(0)} />
-
   <!-- segment end handles -->
-  {#each geom.segments as segment, idx}
+  {#each geom.points as pt, idx}
     <Handle 
       class="a9s-corner-handle"
-      x={segment.end[0]}
-      y={segment.end[1]}
+      x={pt.point[0]}
+      y={pt.point[1]}
       scale={viewportScale}
       on:pointerenter={onEnterHandle}
       on:pointerleave={onLeaveHandle}

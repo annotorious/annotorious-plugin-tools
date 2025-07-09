@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from 'svelte';
-  import type { DrawingMode, Polyline, PolylineSegment, Transform } from '@annotorious/annotorious';
+  import type { DrawingMode, Polyline, PolylinePoint, Transform } from '@annotorious/annotorious';
   import { boundsFromPoints, distance, getMaskDimensions, ShapeType } from '@annotorious/annotorious';
 
   const dispatch = createEventDispatcher<{ create: Polyline }>();
@@ -110,17 +110,14 @@
     const p = points.slice(0, -1);
     if (p.length < 2) return;
 
-    const [start, ...pts] = p;
-
     const shape: Polyline = {
       type: ShapeType.POLYLINE, 
       geometry: {
         bounds: boundsFromPoints(p),
-        start,
-        segments: pts.map(pt => ({
-          type: 'LINE',
-          end: pt
-        } as PolylineSegment))
+        points: p.map(point => ({
+          type: 'CORNER',
+          point
+        } as PolylinePoint))
       }
     }
 
@@ -139,33 +136,18 @@
 
   $: coords = cursor ? [...points, cursor] : points;
 
-  $: mask = coords.length > 0 ? getMaskDimensions(boundsFromPoints(coords), 2 / viewportScale) : undefined;
-
-  // Generate SVG path string from points
   $: pathString = coords.length > 0 ? 
     `M ${coords[0][0]},${coords[0][1]}` + 
     coords.slice(1).map(([x, y]) => ` L ${x},${y}`).join('') 
     : '';
-
-  const maskId = `polyline-mask-${Math.random().toString(36).substring(2, 12)}`;
 </script>
 
 <g class="a9s-annotation a9s-rubberband">
-  {#if mask && pathString}
-    <defs>
-      <mask id={maskId} class="a9s-rubberband-polyline-mask">
-        <rect x={mask.x} y={mask.y} width={mask.w} height={mask.h} fill="white" />
-        <path d={pathString} stroke="black" stroke-width="2" fill="none" />
-      </mask>
-    </defs>
-
-    <!-- Outer stroke for the selection effect -->
+  {#if pathString}
     <path 
       class="a9s-outer"
-      mask={`url(#${maskId})`}
       d={pathString} />
 
-    <!-- Inner polyline -->
     <path 
       class="a9s-inner"
       d={pathString} />
@@ -182,16 +164,6 @@
 </g>
 
 <style>
-  mask.a9s-rubberband-polyline-mask > rect {
-    fill: #fff;
-  }
-
-  mask.a9s-rubberband-polyline-mask > path {
-    stroke: #000;
-    stroke-width: 2;
-    fill: none;
-  }
-
   path.a9s-outer {
     stroke: rgba(0, 0, 0, 0.35);
     stroke-width: 8px;
