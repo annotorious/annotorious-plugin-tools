@@ -14,6 +14,7 @@
   let lastPointerDown: { timeStamp: number, offsetX: number, offsetY: number };
   let points: [number, number][] = [];
   let cursor: [number, number] | undefined;
+
   let isClosable: boolean = false;
 
   // Keep track of the user keeping the finger in place
@@ -78,7 +79,9 @@
       if (timeDifference > 300 || d > 15) // Not a single click - ignore
         return;
 
-      if (points.length === 0) {
+      if (isClosable) {
+        createClosed();
+      } else if (points.length === 0) {
         // Start drawing
         const point = transform.elementToImage(evt.offsetX, evt.offsetY);
         points.push(point);
@@ -104,7 +107,11 @@
       // Stop click event from propagating if we're drawing
       evt.stopImmediatePropagation();
 
-      points.push(cursor!);
+      if (isClosable) {
+        createClosed();
+      } else {
+        points.push(cursor!);
+      }
     }
   }
 
@@ -133,6 +140,25 @@
     dispatch('create', shape);
   }
 
+  const createClosed = () => {
+    const shape: Polyline = {
+      type: ShapeType.POLYGON, 
+      geometry: {
+        bounds: boundsFromPoints(points),
+        points: points.map(point => ({
+          type: 'CORNER',
+          point
+        })),
+        closed: true
+      }
+    }
+
+    points = [];
+    cursor = undefined;
+
+    dispatch('create', shape);
+  }
+
   onMount(() => {
     addEventListener('pointerdown', onPointerDown, true);
     addEventListener('pointermove', onPointerMove);
@@ -140,22 +166,23 @@
     addEventListener('dblclick', onDblClick, true);
   });
 
-  $: coords = cursor ? [...points, cursor] : points;
+  $: coords = cursor ? (isClosable ? points : [...points, cursor]) : [];
 
   $: pathString = coords.length > 0 ? 
     `M ${coords[0][0]},${coords[0][1]}` + 
-    coords.slice(1).map(([x, y]) => ` L ${x},${y}`).join('') 
+    coords.slice(1).map(([x, y]) => ` L ${x},${y}`).join('') +
+    (isClosable ? ' Z' : '')
     : '';
 </script>
 
 <g class="a9s-annotation a9s-rubberband">
   {#if pathString}
     <path 
-      class="a9s-outer"
+      class={`a9s-outer ${isClosable ? 'closed' : 'open'}`}
       d={pathString} />
 
     <path 
-      class="a9s-inner"
+      class={`a9s-inner ${isClosable ? 'closed' : 'open'}`}
       d={pathString} />
         
     {#if isClosable}
@@ -172,15 +199,17 @@
   path.a9s-outer {
     stroke: rgba(0, 0, 0, 0.35);
     stroke-width: 8px;
-    fill: none;
     vector-effect: non-scaling-stroke;
   }
 
   path.a9s-inner {
     stroke: #fff;
     stroke-width: 2px;
-    fill: none;
     vector-effect: non-scaling-stroke;
+  }
+
+  :global(.a9s-annotationlayer .a9s-annotation) path.open {
+    fill: transparent;
   }
 
   circle.a9s-handle {
