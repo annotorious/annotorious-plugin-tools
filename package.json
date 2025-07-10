@@ -1,6 +1,6 @@
 {
   "name": "@annotorious/plugin-tools",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Additional drawing tools for Annotorious",
   "author": "Rainer Simon",
   "license": "BSD-3-Clause",
@@ -44,6 +44,7 @@
     "vite-plugin-dts": "^4.5.4"
   },
   "peerDependencies": {
-    "@annotorious/openseadragon": "^3.5.1"
+    "@annotorious/annotorious": "^3.6.0",
+    "@annotorious/openseadragon": "^3.6.0"
   }
 }

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import { ShapeType } from '@annotorious/annotorious';
-  import { boundsFromPoints, distance } from '@annotorious/annotorious';
+  import { ShapeType, boundsFromPoints, distance } from '@annotorious/annotorious';
   import type { Line, DrawingMode, Transform } from '@annotorious/annotorious';
 
   const dispatch = createEventDispatcher<{ create: Line }>();

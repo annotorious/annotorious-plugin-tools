@@ -40,6 +40,11 @@
 
       import '@annotorious/openseadragon/annotorious-openseadragon.css';
 
+      // var IMAGE = 'https://images.collections.yale.edu/iiif/2/yuag:aa4476b7-1e23-4339-b26a-c75f8f0e42bc/info.json';
+
+      // Ashmolean Museum Evans Architectural Plans HF/2
+      // var IMAGE = 'https://iiif.bodleian.ox.ac.uk/iiif/image/af315e66-6a85-445b-9e26-012f729fc49c/info.json';
+
       // Balliol College MS 238A
       var IMAGE = 'https://iiif.bodleian.ox.ac.uk/iiif/image/79bf8325-22fa-4696-afe5-7d827d84f393/info.json';
 
@@ -60,7 +65,11 @@
 
         var anno = createOSDAnnotator(viewer, {
           drawingEnabled: false,
-          drawingMode: 'drag'
+          drawingMode: 'drag',
+          style: {
+            stroke: '#ff0000',
+            strokeWidth: 3
+          }
         });
 
         // Mount selector pack extension
@@ -68,6 +77,8 @@
         
         var tools = anno.listDrawingTools();
         console.log(tools);
+
+        anno.setDrawingTool('smooth-polyline');
 
         var selectedTool = 0;
 
