@@ -155,7 +155,7 @@
       points = geom.points;
     }
 
-    const bounds = boundsFromPoints(approximateAsPolygon(geom));
+    const bounds = boundsFromPoints(approximateAsPolygon(points, geom.closed));
 
     return {
       ...polyline,
