@@ -232,6 +232,6 @@
 
 <style>
   :global(.a9s-annotationlayer .a9s-annotation) path.polyline.open {
-    fill: transparent;
+    fill: transparent !important;
   }
 </style>
