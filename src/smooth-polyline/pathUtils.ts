@@ -52,12 +52,12 @@ export const togglePolylineCorner = (shape: Polyline, cornerIdx: number): Polyli
     
     const currPoint = corner.point;
 
-    const inHandle: [number, number] = [
+    const inHandle: [number, number] = corner.inHandle || [
       currPoint[0] - tangentX,
       currPoint[1] - tangentY
     ];
 
-    const outHandle: [number, number] = [
+    const outHandle: [number, number] = corner.outHandle || [
       currPoint[0] + tangentX,
       currPoint[1] + tangentY
     ];

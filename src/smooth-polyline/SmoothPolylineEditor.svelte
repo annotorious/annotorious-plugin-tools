@@ -21,7 +21,7 @@
   /** Drawing tool layer **/
   let isHandleHovered = false;
   let lastHandleClick: number | null = null;
-  let selectedEnd: number | null = null;
+  let selectedCorner: number | null = null;
 
   $: geom = shape.geometry;
 
@@ -29,12 +29,7 @@
   const onEnterHandle = () => isHandleHovered = true;
   const onLeaveHandle = () => isHandleHovered = false;
 
-  /**
-   * De-selects all corners and reclaims focus.
-   */
-  const onShapePointerUp = () => {
-    selectedEnd = null;
-  }
+  const onShapePointerUp = () => selectedCorner = null;
 
   /**
    * Updates state, waiting for potential click.
@@ -55,12 +50,23 @@
     // Drag, not click
     if (performance.now() - lastHandleClick > CLICK_THRESHOLD) return;
 
-    const isSelected = selectedEnd === idx;
-    if (isSelected) {
+    // Click on a CORNER instantly selects and converts to curve
+    const { type } = geom.points[idx];
+    if (type === 'CORNER') {
+      selectedCorner = idx;
+
       const polyline = togglePolylineCorner(shape, idx);
       dispatch('change', polyline);
     } else {
-      selectedEnd = idx;
+      const isSelected = selectedCorner === idx;
+      if (isSelected) {
+        // If already selected, toggle to corner
+        const polyline = togglePolylineCorner(shape, idx);
+        dispatch('change', polyline);
+      } else {
+        // Just select
+        selectedCorner = idx;
+      }
     }
   }
 
@@ -187,25 +193,27 @@
     on:pointerdown={grab('SHAPE')}
     d={d} />
 
-  {#each geom.points as pt, idx}
-    {#if pt.type === 'CURVE'}
-      {#if pt.inHandle}
+  <!-- Bezier handles only on the selected corner -->
+  {#if selectedCorner !== null}
+    {@const corner = geom.points[selectedCorner]}
+    {#if corner.type === 'CURVE'}
+      {#if corner.inHandle}
         <BezierHandle
-          corner={pt.point}
-          controlPoint={pt.inHandle}
+          corner={corner.point}
+          controlPoint={corner.inHandle}
           viewportScale={viewportScale}
-          on:pointerdown={grab(`IN-${idx}`)} />
+          on:pointerdown={grab(`IN-${selectedCorner}`)} />
       {/if}
-      
-      {#if pt.outHandle}
+
+      {#if corner.outHandle}
         <BezierHandle
-          corner={pt.point}
-          controlPoint={pt.outHandle}
+          corner={corner.point}
+          controlPoint={corner.outHandle}
           viewportScale={viewportScale}
-          on:pointerdown={grab(`OUT-${idx}`)} />
+          on:pointerdown={grab(`OUT-${selectedCorner}`)} />
       {/if}
     {/if}
-  {/each}
+  {/if}
 
   {#each geom.points as pt, idx}
     <Handle 
