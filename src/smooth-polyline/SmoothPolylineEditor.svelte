@@ -55,13 +55,13 @@
     if (type === 'CORNER') {
       selectedCorner = idx;
 
-      const polyline = togglePolylineCorner(shape, idx);
+      const polyline = togglePolylineCorner(shape, idx, viewportScale);
       dispatch('change', polyline);
     } else {
       const isSelected = selectedCorner === idx;
       if (isSelected) {
         // If already selected, toggle to corner
-        const polyline = togglePolylineCorner(shape, idx);
+        const polyline = togglePolylineCorner(shape, idx,viewportScale);
         dispatch('change', polyline);
       } else {
         // Just select

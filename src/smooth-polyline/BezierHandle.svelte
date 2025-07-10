@@ -45,6 +45,7 @@
 
   circle.a9s-tangent-handle {
     fill: #000;
+    cursor: crosshair;
     stroke: #fff;
     stroke-width: 1px;
     vector-effect: non-scaling-stroke;

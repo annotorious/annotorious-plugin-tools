@@ -3,7 +3,7 @@ import type { Polyline, PolylinePoint } from '@annotorious/annotorious';
 export const calculateTangentDirection = (
   shape: Polyline,
   index: number, 
-  maxWidth: number = 60
+  viewportScale: number
 ): [number, number] => {
   const { points, closed } = shape.geometry;
 
@@ -35,20 +35,20 @@ export const calculateTangentDirection = (
 
   const length = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
   if (length > 0) {
-    const factor = Math.min(length * 0.3, maxWidth); // Control handle distance
-    tangentX = (tangentX / length) * factor;
-    tangentY = (tangentY / length) * factor;
+    const factor = Math.min(0.3 * length, 100 / viewportScale); // Control handle distance
+    tangentX = tangentX / length * factor;
+    tangentY = tangentY / length * factor;
   }
 
   return [tangentX, tangentY];
 }
 
-export const togglePolylineCorner = (shape: Polyline, cornerIdx: number): Polyline => {
+export const togglePolylineCorner = (shape: Polyline, cornerIdx: number, viewportScale: number): Polyline => {
   const corner = shape.geometry.points[cornerIdx];
   
   if (corner.type === 'CORNER') {
     // Convert to curve - create symmetric control points for smooth curve
-    const [tangentX, tangentY] = calculateTangentDirection(shape, cornerIdx);
+    const [tangentX, tangentY] = calculateTangentDirection(shape, cornerIdx, viewportScale);
     
     const currPoint = corner.point;
 
