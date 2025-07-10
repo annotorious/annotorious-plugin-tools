@@ -52,6 +52,7 @@
 
     // Click on a CORNER instantly selects and converts to curve
     const { type } = geom.points[idx];
+    
     if (type === 'CORNER') {
       selectedCorner = idx;
 

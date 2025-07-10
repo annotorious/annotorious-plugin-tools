@@ -34,13 +34,17 @@
     </div>
 
     <script type="module">
-      import { createImageAnnotator } from '@annotorious/annotorious';
+      import { W3CImageFormat, createImageAnnotator } from '@annotorious/annotorious';
       import { mountPlugin as mountToolsPlugin } from '../src';
 
       import '@annotorious/annotorious/annotorious.css';
 
       window.onload = function() {
-        var anno = createImageAnnotator('sample-image');
+        var anno = createImageAnnotator('sample-image', {
+          adapter: W3CImageFormat('sample-image'),
+        });
+
+        anno.loadAnnotations('annotations.json');
 
         anno.on('createAnnotation', function (annotation) {
           console.log('created', annotation);

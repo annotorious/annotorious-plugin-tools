@@ -1,0 +1,19 @@
+[{
+  "id": "3609133b-c2cc-4bae-920c-913a0146a582",
+  "target": {
+    "source": "sample-image",
+    "type": "SpecificResource",
+    "selector": {
+      "type": "SvgSelector",
+      "value": "<svg><path d=\"M 64.33203125 211.5859375 C 64.33203125 211.5859375 106.127734375 71.7953125 140.76953125 73.45703125 C 175.411328125 75.11875 179.8046875 217.125 179.8046875 217.125 L 260.703125 94.1953125 L 330.90234375 108.37890625\" /></svg>"
+    }
+  },
+  "@context": "http://www.w3.org/ns/anno.jsonld",
+  "type": "Annotation",
+  "body": [],
+  "created": "2025-07-10T11:29:39.589Z",
+  "creator": {
+    "isGuest": true,
+    "id": "NuGkPVndM8DnESTziaUP"
+  }
+}]
