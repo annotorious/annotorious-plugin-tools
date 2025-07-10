@@ -181,13 +181,13 @@
   let:grab={grab}>
 
   <path
-    class="a9s-outer polyline"
+    class={`a9s-outer polyline ${shape.geometry.closed ? 'closed' : 'open'}`}
     on:pointerup={onShapePointerUp}
     on:pointerdown={grab('SHAPE')}
     d={d} />
 
   <path
-    class="a9s-inner polyline a9s-shape-handle"
+    class={`a9s-inner polyline a9s-shape-handle ${shape.geometry.closed ? 'closed' : 'open'}`}
     style={computedStyle}
     on:pointerup={onShapePointerUp}
     on:pointerdown={grab('SHAPE')}
@@ -230,7 +230,7 @@
 </Editor>
 
 <style>
-  :global(.a9s-annotationlayer .a9s-annotation) path.polyline {
+  :global(.a9s-annotationlayer .a9s-annotation) path.polyline.open {
     fill: transparent;
   }
 </style>

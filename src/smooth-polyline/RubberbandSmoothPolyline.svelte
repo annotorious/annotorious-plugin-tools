@@ -142,7 +142,7 @@
 
   const createClosed = () => {
     const shape: Polyline = {
-      type: ShapeType.POLYGON, 
+      type: ShapeType.POLYLINE, 
       geometry: {
         bounds: boundsFromPoints(points),
         points: points.map(point => ({
