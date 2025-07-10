@@ -4,6 +4,7 @@
   import { approximateAsPolygon, boundsFromPoints, computeSVGPath, isTouch } from '@annotorious/annotorious';
   import type { Polyline, PolylineGeometry, PolylinePoint, Shape, Transform } from '@annotorious/annotorious';
   import { togglePolylineCorner } from './pathUtils';
+  import BezierHandle from './BezierHandle.svelte';
 
   const dispatch = createEventDispatcher<{ change: Polyline }>();
   
@@ -187,6 +188,26 @@
     d={d} />
 
   {#each geom.points as pt, idx}
+    {#if pt.type === 'CURVE'}
+      {#if pt.inHandle}
+        <BezierHandle
+          corner={pt.point}
+          controlPoint={pt.inHandle}
+          viewportScale={viewportScale}
+          on:pointerdown={grab(`IN-${idx}`)} />
+      {/if}
+      
+      {#if pt.outHandle}
+        <BezierHandle
+          corner={pt.point}
+          controlPoint={pt.outHandle}
+          viewportScale={viewportScale}
+          on:pointerdown={grab(`OUT-${idx}`)} />
+      {/if}
+    {/if}
+  {/each}
+
+  {#each geom.points as pt, idx}
     <Handle 
       class="a9s-corner-handle"
       x={pt.point[0]}
@@ -197,51 +218,6 @@
       on:pointerdown={onHandlePointerDown}
       on:pointerdown={grab(`CORNER-${idx}`)}
       on:pointerup={onHandlePointerUp(idx)} />
-  {/each}
-
-  <!-- Control handles for curve points -->
-  {#each geom.points as pt, idx}
-    {#if pt.type === 'CURVE'}
-      {#if pt.inHandle}
-        <Handle 
-          class="a9s-control-handle a9s-in-handle"
-          x={pt.inHandle[0]}
-          y={pt.inHandle[1]}
-          scale={viewportScale}
-          on:pointerdown={grab(`IN-${idx}`)} />
-        
-        <!-- Control line -->
-        <line
-          class="a9s-control-line"
-          x1={pt.point[0]}
-          y1={pt.point[1]}
-          x2={pt.inHandle[0]}
-          y2={pt.inHandle[1]}
-          stroke="#666"
-          stroke-width="1"
-          stroke-dasharray="2,2" />
-      {/if}
-      
-      {#if pt.outHandle}
-        <Handle 
-          class="a9s-control-handle a9s-out-handle"
-          x={pt.outHandle[0]}
-          y={pt.outHandle[1]}
-          scale={viewportScale}
-          on:pointerdown={grab(`OUT-${idx}`)} />
-        
-        <!-- Control line -->
-        <line
-          class="a9s-control-line"
-          x1={pt.point[0]}
-          y1={pt.point[1]}
-          x2={pt.outHandle[0]}
-          y2={pt.outHandle[1]}
-          stroke="#666"
-          stroke-width="1"
-          stroke-dasharray="2,2" />
-      {/if}
-    {/if}
   {/each}
 </Editor>
 
