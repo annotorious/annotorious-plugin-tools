@@ -1,10 +1,14 @@
 # Annotorious Tools Plugin
 
-Additional drawing tools for Annotorious:
+A plugin that adds additional drawing tools to [Annotorious](https://annotorious.dev/).
 
-* **Ellipse**: draw ellipse or circle shapes. Hold `SHIFT` to constrain the aspect ratio to a circle. Hold `CTRL` to drag the circle from the center.
-* **Line**: a simple line between two points.
-* **Path**: draw polylines with a mix of straight and curve segments.
+## Features
+
+* **Ellipse**: Draw ellipses and circle. 
+  * Hold `SHIFT` to constrain aspect ratio to a circle. 
+  * Hold `CTRL` to draw from the center.
+* **Line**: Draw a straight line between two points.
+* **Path**: Create polylines using a combination of straight and curved segments.
 
 ## Installation
 
@@ -12,11 +16,11 @@ Additional drawing tools for Annotorious:
 npm install @annotorious/plugin-tools
 ```
 
-## Use
+## Usage
 
-This plugin works with both Annotorious versions, for images and OpenSeadragon.
+The plugin support both versions of Annotorious: the standard image annotator and the OpenSeadragon integration.
 
-### Image Version
+### Image Annotator
 
 ```js
 import { createImageAnnotator } from '@annotorious/annotorious';
@@ -37,7 +41,7 @@ console.log(anno.listDrawingTools());
 anno.setDrawingTool('path');
 ```
 
-### OpenSeadragon Version
+### OpenSeadragon Annotator
 
 ```js
 import OpenSeadragon from 'openseadragon';
