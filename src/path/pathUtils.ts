@@ -70,7 +70,8 @@ export const togglePolylineCorner = (shape: Polyline, cornerIdx: number, viewpor
           ...pt,
           type: 'CURVE',
           inHandle,
-          outHandle
+          outHandle,
+          locked: true
         } as PolylinePoint : pt)
       }
     };
