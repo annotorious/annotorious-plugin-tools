@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import { Editor, Handle } from '@annotorious/annotorious/src';
   import { approximateAsPolygon, boundsFromPoints, computeSVGPath, isTouch } from '@annotorious/annotorious';
   import type { Polyline, PolylineGeometry, PolylinePoint, Shape, Transform } from '@annotorious/annotorious';
@@ -23,6 +23,8 @@
   let lastHandleClick: number | null = null;
   let selectedCorner: number | null = null;
 
+  let isAltPressed = false;
+
   $: geom = shape.geometry;
 
   /** Handle hover state **/
@@ -44,7 +46,7 @@
   }
 
   /** Selection handling logic **/
-  const onHandlePointerUp = (idx: number) => (evt: PointerEvent) => {
+  const onHandlePointerUp = (idx: number) => () => {
     if (!lastHandleClick || isTouch) return;
 
     // Drag, not click
@@ -69,6 +71,58 @@
         selectedCorner = idx;
       }
     }
+  }
+
+  // Re-establish locked, symmetrical handles on double click
+  const onDoubleClick = (idx:  number) => () => {
+    const pt = geom.points[idx];
+
+    if (pt.type === 'CORNER') return;
+
+    // Should never happen
+    if (!pt.inHandle && !pt.outHandle) return;
+
+    const points = geom.points.map((point, i) => {
+      if (i !== idx) return point;
+
+      const newPt = { ...point, locked: true };
+      
+      const handle = pt.inHandle || pt.outHandle;
+      if (!handle) return point;
+
+      const dx = handle[0] - pt.point[0];
+      const dy = handle[1] - pt.point[1];
+      const length = Math.sqrt(dx ** 2 + dy ** 2);
+
+      if (length === 0) return point;
+
+      const oppositeHandle: [number, number] = [
+        pt.point[0] - dx,
+        pt.point[1] - dy
+      ];
+
+      if (pt.inHandle) {
+        newPt.inHandle = pt.inHandle;
+        newPt.outHandle = oppositeHandle;
+      } else if (pt.outHandle) {
+        newPt.outHandle = pt.outHandle;
+        newPt.inHandle = oppositeHandle;
+      }
+
+      return newPt;
+    });
+
+    const bounds = boundsFromPoints(approximateAsPolygon(points, geom.closed));
+    const updated: Polyline = {
+      ...shape,
+      geometry: {
+        bounds,
+        points,
+        closed: geom.closed
+      }
+    };
+
+    dispatch('change', updated);
   }
 
   const editor = (polyline: Shape, handle: string, delta: [number, number]) => {
@@ -100,13 +154,15 @@
       
       points = geom.points.map((pt, i) => {
         if (i === idx && pt.type === 'CURVE') {
-          const newPt = { ...pt };
+          const locked = isAltPressed ? false : pt.locked;
+
+          const newPt = { ...pt, locked };
           
           if (handleType === 'IN' && pt.inHandle) {
             newPt.inHandle = [pt.inHandle[0] + dx, pt.inHandle[1] + dy];
             
             // Maintain symmetry for smooth curves
-            if (pt.outHandle) {
+            if (pt.outHandle && locked) {
               const inDx = newPt.inHandle[0] - pt.point[0];
               const inDy = newPt.inHandle[1] - pt.point[1];
               const inLength = Math.sqrt(inDx ** 2 + inDy ** 2);
@@ -127,7 +183,7 @@
             newPt.outHandle = [pt.outHandle[0] + dx, pt.outHandle[1] + dy];
             
             // Maintain symmetry for smooth curves
-            if (pt.inHandle) {
+            if (pt.inHandle && locked) {
               const outDx = newPt.outHandle[0] - pt.point[0];
               const outDy = newPt.outHandle[1] - pt.point[1];
               const outLength = Math.sqrt(outDx ** 2 + outDy ** 2);
@@ -167,6 +223,26 @@
       }
     } as Polyline;
   }
+
+  onMount(() => {
+    const onKeyDown = (evt: KeyboardEvent) => {
+      if (evt.altKey && !isAltPressed)
+        isAltPressed = true;
+    }
+  
+    const onKeyUp = (evt: KeyboardEvent) => {
+      if (!evt.altKey && isAltPressed)
+        isAltPressed = false;
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    }
+  });
 
   $: d = computeSVGPath(geom);
 </script>
@@ -222,6 +298,7 @@
       x={pt.point[0]}
       y={pt.point[1]}
       scale={viewportScale}
+      on:dblclick={onDoubleClick(idx)}
       on:pointerenter={onEnterHandle}
       on:pointerleave={onLeaveHandle}
       on:pointerdown={onHandlePointerDown}
